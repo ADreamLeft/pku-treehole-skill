@@ -11,62 +11,50 @@
 
 ## Environment
 
-Primary runtime:
-
 - OpenCLI is installed.
 - `opencli doctor` reports that Browser Bridge is connected.
 - Chrome is logged into `https://treehole.pku.edu.cn/web/`.
+- If multiple Chrome profiles are connected, use `opencli profile use <profile>` before running Treehole commands.
 
 Useful checks:
 
 ```bash
 opencli doctor
+opencli profile list
 opencli treehole --help
 opencli treehole tags -f table
 ```
 
-Legacy Python fallback:
+## Access Model
 
-Use this only when OpenCLI Browser Bridge is unavailable and a Chrome debug port is already running.
+The OpenCLI adapter uses Browser Bridge to operate inside the user's logged-in browser session. It reads Treehole content through the browser page state and page-native methods, and emits structured output through OpenCLI formats such as JSON, Markdown, CSV, or table.
+
+Use persistent site sessions for repeated commands:
 
 ```bash
-python3 -m pip install requests playwright
-python3 -m playwright install chromium
-export TREEHOLE_DEBUG_HOST=localhost
-export TREEHOLE_DEBUG_PORT=9222
-export TREEHOLE_URL=https://treehole.pku.edu.cn/web/
+opencli treehole search "数学期末" --pages 5 --site-session persistent -f json
 ```
 
-## Access model
-
-The preferred OpenCLI adapter uses Browser Bridge to operate inside the user's logged-in browser session. It reads Treehole content through the browser page state and page-native methods, and emits structured output through OpenCLI formats such as JSON, Markdown, CSV, or table.
+This reuses OpenCLI's `site:treehole` browser session. Login state remains in Chrome/OpenCLI Browser Bridge; the skill does not store PKU credentials or manually exported cookies.
 
 Preferred order:
 
 1. Verify Browser Bridge with `opencli doctor`.
-2. Use `opencli treehole search`, `latest`, `post`, `tags`, or `export-markdown`.
+2. Use `opencli treehole search`, `latest`, `post`, `tags`, or `export-markdown`, with `--site-session persistent` for browser-backed commands.
 3. Request `-f json` for downstream analysis and summarization.
-4. Use the bundled Python fallback only for environments where OpenCLI is unavailable.
+4. If OpenCLI cannot connect, ask the user to reopen Chrome, check the Browser Bridge extension, run `opencli daemon restart`, and log into Treehole again if needed.
 
 ## Safety rules
 
-- Keep actions strictly serial. Do not use `ThreadPoolExecutor`, `asyncio.gather`, or similar fan-out patterns.
+- Keep actions strictly serial. Do not use concurrent command fan-out or aggressive retry loops.
 - Do not aggressively refresh the same keyword or PID.
 - Do not open multiple automation tabs at once.
-- Keep one run modest. As a rule of thumb, avoid going past `max_pages=20` in a single task.
-
-OpenCLI and the bundled fallback are designed for conservative, serial reads. The Python fallback also includes local throttling:
-
-| Item | Value |
-| --- | --- |
-| Rate target | 18 page actions / 60 seconds |
-| Minimum gap | ~3.3s + random jitter |
-| Page settle wait | 2.5s |
-| Scroll settle wait | 2.5s |
+- Keep one run modest. Stay within the adapter's `--pages` limit and split larger tasks into batches.
+- Do not ask for or store PKU username/password, copied cookies, bearer tokens, UUID, or XSRF tokens.
 
 ## Page Model
 
-The current skill reads from the logged-in web app rather than directly calling public REST endpoints.
+The current skill uses OpenCLI to read from the logged-in web app rather than directly calling REST endpoints from standalone scripts.
 
 Useful component/data entry points:
 
@@ -120,22 +108,27 @@ Known tag IDs:
 
 ## Troubleshooting
 
-### Cannot connect to the debug port
+### Treehole is not logged in
 
-Chrome is not running with `--remote-debugging-port=<port>`, or it is using a different port than `TREEHOLE_DEBUG_PORT`.
+Open `https://treehole.pku.edu.cn/web/` in the connected Chrome profile and confirm the feed is visible before running the skill.
 
-### The page opens but the skill says Treehole is not logged in
+### Browser Bridge is disconnected
 
-Reopen the URL configured by `TREEHOLE_URL` in the debug Chrome instance and confirm the feed is visible before running the skill.
+Run `opencli doctor`. If it reports a disconnected extension, open Chrome, check the OpenCLI Browser Bridge extension, then run:
+
+```bash
+opencli daemon restart
+opencli doctor
+```
 
 ### Search results look unrelated
 
 A blank keyword means the latest feed rather than search mode. Pass a non-empty keyword when you want search semantics.
 
-### `get_comments()` returns only part of a hot thread
+### A hot thread returns partial comments
 
-Very hot threads may render replies incrementally in the page. Retry with `--all-comments`, keep the batch small, and avoid repeated refreshes.
+Very hot threads may render replies incrementally in the page. Retry once with `opencli treehole post <pid> --all-comments --site-session persistent -f json`, keep the batch small, and avoid repeated refreshes.
 
-### `bookmarks` fails
+### Need direct cookie-file mode
 
-Bookmarks are not currently exposed in the direct-page reader.
+This skill deliberately does not implement direct cookie-file mode. Use Chrome/OpenCLI Browser Bridge persistent sessions instead.
