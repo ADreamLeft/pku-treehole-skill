@@ -7,6 +7,7 @@
 - Safety rules
 - Page model
 - Data fields
+- Write actions
 - Troubleshooting
 
 ## Environment
@@ -27,7 +28,7 @@ opencli treehole tags -f table
 
 ## Access Model
 
-The OpenCLI adapter uses Browser Bridge to operate inside the user's logged-in browser session. It reads Treehole content through the browser page state and page-native methods, and emits structured output through OpenCLI formats such as JSON, Markdown, CSV, or table.
+The OpenCLI adapter uses Browser Bridge to operate inside the user's logged-in browser session. It reads Treehole content through the browser page state and page-native methods, can publish plain-text posts/comments through page-native APIs when explicitly confirmed, and emits structured output through OpenCLI formats such as JSON, Markdown, CSV, or table.
 
 Use persistent site sessions for repeated commands:
 
@@ -40,9 +41,10 @@ This reuses OpenCLI's `site:treehole` browser session. Login state remains in Ch
 Preferred order:
 
 1. Verify Browser Bridge with `opencli doctor`.
-2. Use `opencli treehole search`, `latest`, `post`, `tags`, or `export-markdown`, with `--site-session persistent` for browser-backed commands.
+2. Use `opencli treehole search`, `latest`, `post`, `tags`, `export-markdown`, `write`, or `comment`, with `--site-session persistent` for browser-backed commands.
 3. Request `-f json` for downstream analysis and summarization.
-4. If OpenCLI cannot connect, ask the user to reopen Chrome, check the Browser Bridge extension, run `opencli daemon restart`, and log into Treehole again if needed.
+4. For `write` and `comment`, remember that commands dry-run by default and require `--confirm` to send.
+5. If OpenCLI cannot connect, ask the user to reopen Chrome, check the Browser Bridge extension, run `opencli daemon restart`, and log into Treehole again if needed.
 
 ## Safety rules
 
@@ -50,6 +52,8 @@ Preferred order:
 - Do not aggressively refresh the same keyword or PID.
 - Do not open multiple automation tabs at once.
 - Keep one run modest. Stay within the adapter's `--pages` limit and split larger tasks into batches.
+- Do not publish posts or comments unless the user explicitly asks for that exact write action and content.
+- For write actions, prefer a dry-run preview first when target/content are not already obvious.
 - Do not ask for or store PKU username/password, copied cookies, bearer tokens, UUID, or XSRF tokens.
 
 ## Page Model
@@ -62,6 +66,8 @@ Useful component/data entry points:
 - `headerTop.search()`: trigger keyword search
 - search keyword `#PID`: fetch one post by PID
 - `reply.data`: replies already loaded for one post
+- `POST /api/pku_store`: publish plain-text post through page context
+- `POST /api/pku_comment_v3`: publish plain-text comment through page context
 
 Behavior notes:
 
@@ -105,6 +111,22 @@ Known tag IDs:
 | `name` | str | anonymous display name |
 | `islz` | int | `1` when the author is the original poster |
 | `quote_text` | str/null | quoted snippet |
+
+## Write actions
+
+Write commands use the same Chrome/OpenCLI Browser Bridge login state as read commands. They do not persist credentials locally.
+
+```bash
+opencli treehole write "炒作是什么意思" -f json
+opencli treehole write "炒作是什么意思" --confirm -f json
+opencli treehole comment 8279942 "莫名其妙的热梗" --confirm -f json
+```
+
+`write` posts plain text via `POST /api/pku_store` with `FormData` fields `text` and `type=text`; optional `--tag-id` is sent as `label`.
+
+`comment` posts plain text via `POST /api/pku_comment_v3` with JSON fields `pid` and `text`; optional `--comment-id` replies to a specific comment.
+
+Both commands dry-run by default. Add `--confirm` only when the user clearly requested the write action and the final content is known.
 
 ## Troubleshooting
 

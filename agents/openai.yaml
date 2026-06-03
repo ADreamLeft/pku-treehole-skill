@@ -1,6 +1,6 @@
 interface:
   display_name: "PKU Treehole"
-  short_description: "Search and export PKU Treehole via OpenCLI"
-  default_prompt: "Use $pku-treehole to search PKU Treehole with OpenCLI and summarize the relevant posts."
+  short_description: "Search, export, and explicitly publish text on PKU Treehole via OpenCLI"
+  default_prompt: "Use $pku-treehole to search PKU Treehole with OpenCLI, summarize relevant posts, and only publish text when explicitly requested."
 policy:
   allow_implicit_invocation: true

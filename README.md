@@ -1,6 +1,6 @@
 # PKU Treehole Skill
 
-这是一个给 Codex 使用的北大树洞 skill。它只配合 OpenCLI 的 `treehole` adapter 使用，通过 OpenCLI Browser Bridge 复用本机已登录的 Chrome 会话读取树洞页面状态，不要求输入学号密码，也不要求手动复制 cookie、token、UUID 或 XSRF。
+这是一个给 Codex 使用的北大树洞 skill。它只配合 OpenCLI 的 `treehole` adapter 使用，通过 OpenCLI Browser Bridge 复用本机已登录的 Chrome 会话读取树洞页面状态，并可在明确要求时发布纯文字帖子/评论；它不要求输入学号密码，也不要求手动复制 cookie、token、UUID 或 XSRF。
 
 ## 能做什么
 
@@ -9,6 +9,8 @@
 - 读取单帖详情和回复
 - 查询已知标签 ID
 - 导出筛选结果为 Markdown
+- 发布纯文字树洞帖子，默认 dry-run，需 `--confirm` 才会发送
+- 在帖子下发布纯文字评论，默认 dry-run，需 `--confirm` 才会发送
 
 ## 安装
 
@@ -20,6 +22,18 @@ git clone https://github.com/ADreamLeft/pku-treehole-skill.git ~/.codex/skills/p
 ```
 
 然后重启 Codex，或重新加载 skills。
+
+如果本机还没有 `opencli treehole` adapter，把仓库中的 adapter 文件复制到 OpenCLI 用户目录：
+
+```bash
+mkdir -p ~/.opencli/clis/treehole ~/.opencli/node_modules/@jackwener
+cp -R ~/.codex/skills/pku-treehole/opencli/clis/treehole/*.js ~/.opencli/clis/treehole/
+test -f ~/.opencli/package.json || cp ~/.codex/skills/pku-treehole/opencli/package.json ~/.opencli/package.json
+test -e ~/.opencli/node_modules/@jackwener/opencli || ln -s "$(npm root -g)/@jackwener/opencli" ~/.opencli/node_modules/@jackwener/opencli
+opencli treehole --help
+```
+
+`opencli treehole --help` 应该能看到 `search`、`latest`、`post`、`tags`、`export-markdown`、`write` 和 `comment`。
 
 ## OpenCLI 准备
 
@@ -69,6 +83,9 @@ opencli treehole post 8164148 --all-comments --site-session persistent -f json
 opencli treehole latest --pages 3 --min-likes 5 --min-replies 10 --site-session persistent -f json
 opencli treehole tags -f table
 opencli treehole export-markdown ./treehole.md --keyword "数学期末" --pages 5 --site-session persistent -f json
+opencli treehole write "炒作是什么意思" -f json
+opencli treehole write "炒作是什么意思" --confirm -f json
+opencli treehole comment 8279942 "莫名其妙的热梗" --confirm -f json
 ```
 
 可查看 adapter 参数：
@@ -77,6 +94,8 @@ opencli treehole export-markdown ./treehole.md --keyword "数学期末" --pages 
 opencli treehole --help
 opencli treehole search --help
 opencli treehole post --help
+opencli treehole write --help
+opencli treehole comment --help
 ```
 
 ## 在 Codex 中使用
@@ -98,6 +117,7 @@ Use $pku-treehole to search "数学期末" on PKU Treehole, save raw JSON, and s
 - 先运行 `opencli doctor` 检查 Browser Bridge；
 - 调用 `opencli treehole ... --site-session persistent`；
 - 对需要进一步分析的长帖再读取单帖和全部回复；
+- 对发帖/评论先确认目标和正文；没有 `--confirm` 时只 dry-run；
 - 原始数据和总结分开放置；
 - 保持串行、低频、分批读取，避免大规模抓取。
 
@@ -109,6 +129,21 @@ Use $pku-treehole to search "数学期末" on PKU Treehole, save raw JSON, and s
 ├── README.md
 ├── agents/
 │   └── openai.yaml
+├── opencli/
+│   ├── package.json
+│   └── clis/
+│       └── treehole/
+│           ├── client.js
+│           ├── client.test.js
+│           ├── comment.js
+│           ├── export-markdown.js
+│           ├── latest.js
+│           ├── post.js
+│           ├── search.js
+│           ├── tags.js
+│           ├── utils.js
+│           ├── utils.test.js
+│           └── write.js
 ├── references/
 │   ├── api-and-data.md
 │   └── task-templates.md
@@ -118,5 +153,6 @@ Use $pku-treehole to search "数学期末" on PKU Treehole, save raw JSON, and s
 
 - 只用于你有权限访问的树洞内容。
 - 不要发布或转存包含个人隐私的原始帖子、评论或图片。
+- 不要在用户没有明确要求时发布帖子或评论。
 - 不要做并发抓取、长时间刷新或超大规模导出。
 - 不要让 agent、脚本或配置文件保存 PKU 学号密码、手动复制的 cookie、bearer token、UUID 或 XSRF。
