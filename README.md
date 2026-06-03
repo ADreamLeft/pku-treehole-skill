@@ -14,6 +14,21 @@
 
 ## 安装
 
+先安装 OpenCLI：
+
+```bash
+npm install -g @jackwener/opencli
+```
+
+再安装北大树洞 adapter：
+
+```bash
+npx @adreamleft/opencli-treehole-adapter install
+opencli treehole --help
+```
+
+`opencli treehole --help` 应该能看到 `search`、`latest`、`post`、`tags`、`export-markdown`、`write` 和 `comment`。
+
 把仓库克隆到 Codex skills 目录：
 
 ```bash
@@ -23,7 +38,7 @@ git clone https://github.com/ADreamLeft/pku-treehole-skill.git ~/.codex/skills/p
 
 然后重启 Codex，或重新加载 skills。
 
-如果本机还没有 `opencli treehole` adapter，把仓库中的 adapter 文件复制到 OpenCLI 用户目录：
+如果 npm/npx 不方便使用，也可以从仓库手动安装 adapter：
 
 ```bash
 mkdir -p ~/.opencli/clis/treehole ~/.opencli/node_modules/@jackwener
@@ -32,8 +47,6 @@ test -f ~/.opencli/package.json || cp ~/.codex/skills/pku-treehole/opencli/packa
 test -e ~/.opencli/node_modules/@jackwener/opencli || ln -s "$(npm root -g)/@jackwener/opencli" ~/.opencli/node_modules/@jackwener/opencli
 opencli treehole --help
 ```
-
-`opencli treehole --help` 应该能看到 `search`、`latest`、`post`、`tags`、`export-markdown`、`write` 和 `comment`。
 
 ## OpenCLI 准备
 

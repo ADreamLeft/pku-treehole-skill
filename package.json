@@ -1,0 +1,42 @@
+{
+  "name": "@adreamleft/opencli-treehole-adapter",
+  "version": "0.1.0",
+  "description": "Installer for the PKU Treehole OpenCLI adapter and Codex skill assets.",
+  "type": "module",
+  "bin": {
+    "opencli-treehole-adapter": "./bin/opencli-treehole-adapter.mjs"
+  },
+  "scripts": {
+    "test": "node --test bin/*.test.mjs opencli/clis/treehole/*.test.js"
+  },
+  "files": [
+    "README.md",
+    "SKILL.md",
+    "agents/",
+    "bin/opencli-treehole-adapter.mjs",
+    "opencli/package.json",
+    "opencli/clis/treehole/*.js",
+    "references/"
+  ],
+  "keywords": [
+    "opencli",
+    "codex",
+    "pku",
+    "treehole"
+  ],
+  "author": {
+    "name": "ADreamLeft"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ADreamLeft/pku-treehole-skill.git"
+  },
+  "homepage": "https://github.com/ADreamLeft/pku-treehole-skill#readme",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "@jackwener/opencli": "^1.8.2"
+  }
+}
