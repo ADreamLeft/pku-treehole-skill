@@ -320,7 +320,14 @@ async function main(argv) {
   throw new Error(`Unknown command: ${command}\n${usage()}`);
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+export function shouldRunCli(argvEntry, modulePath = fileURLToPath(import.meta.url)) {
+  if (!argvEntry) return false;
+  const resolvedEntry = resolve(argvEntry);
+  const resolvedModule = resolve(modulePath);
+  return resolvedEntry === resolvedModule || resolvedEntry.endsWith(`${sep}.bin${sep}opencli-treehole-adapter`);
+}
+
+if (shouldRunCli(process.argv[1])) {
   main(process.argv.slice(2)).catch((error) => {
     console.error(error.message);
     process.exitCode = 1;

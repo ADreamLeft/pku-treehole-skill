@@ -2,13 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, readFile, readdir, symlink, writeFile } from 'node:fs/promises';
 import { existsSync, lstatSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 
 import {
   collectRuntimeFiles,
   doctor,
   installAdapter,
+  shouldRunCli,
 } from './opencli-treehole-adapter.mjs';
 
 async function makeFakeOpencliRoot(root) {
@@ -117,4 +118,12 @@ test('doctor validates the treehole command set', async () => {
 
   assert.equal(result.ok, true);
   assert.deepEqual(result.commands.sort(), ['comment', 'export-markdown', 'latest', 'post', 'search', 'tags', 'write']);
+});
+
+test('CLI entrypoint runs when invoked through an npm bin symlink', () => {
+  const modulePath = resolve(new URL('./opencli-treehole-adapter.mjs', import.meta.url).pathname);
+  const symlinkPath = join(dirname(modulePath), '..', 'node_modules', '.bin', 'opencli-treehole-adapter');
+
+  assert.equal(shouldRunCli(modulePath, modulePath), true);
+  assert.equal(shouldRunCli(symlinkPath, modulePath), true);
 });
