@@ -12,7 +12,7 @@
 - 发布纯文字树洞帖子，默认 dry-run，需 `--confirm` 才会发送
 - 在帖子下发布纯文字评论，默认 dry-run，需 `--confirm` 才会发送
 
-## 安装
+## 新机器安装
 
 先安装 OpenCLI：
 
@@ -23,47 +23,26 @@ npm install -g @jackwener/opencli
 再安装北大树洞 adapter：
 
 ```bash
-npx @adreamleft/opencli-treehole-adapter install
-opencli treehole --help
+npx --yes --registry=https://registry.npmjs.org --package @adreamleft/opencli-treehole-adapter@latest opencli-treehole-adapter install
 ```
 
-`opencli treehole --help` 应该能看到 `search`、`latest`、`post`、`tags`、`export-markdown`、`write` 和 `comment`。
-
-把仓库克隆到 Codex skills 目录：
-
-```bash
-mkdir -p ~/.codex/skills
-git clone https://github.com/ADreamLeft/pku-treehole-skill.git ~/.codex/skills/pku-treehole
-```
-
-然后重启 Codex，或重新加载 skills。
-
-如果 npm/npx 不方便使用，也可以从仓库手动安装 adapter：
-
-```bash
-mkdir -p ~/.opencli/clis/treehole ~/.opencli/node_modules/@jackwener
-cp -R ~/.codex/skills/pku-treehole/opencli/clis/treehole/*.js ~/.opencli/clis/treehole/
-test -f ~/.opencli/package.json || cp ~/.codex/skills/pku-treehole/opencli/package.json ~/.opencli/package.json
-test -e ~/.opencli/node_modules/@jackwener/opencli || ln -s "$(npm root -g)/@jackwener/opencli" ~/.opencli/node_modules/@jackwener/opencli
-opencli treehole --help
-```
-
-## OpenCLI 准备
-
-需要先安装并配置 OpenCLI，确保 Browser Bridge 扩展已经连接：
+检查 OpenCLI 和 adapter：
 
 ```bash
 opencli doctor
+opencli treehole --help -f yaml
 ```
 
-如果 Browser Bridge 没有连接，先打开 Chrome，确认扩展可用，然后重启 OpenCLI daemon：
+`opencli treehole --help -f yaml` 应该能看到 7 个命令：`search`、`latest`、`post`、`tags`、`export-markdown`、`write` 和 `comment`。
+
+如果 Browser Bridge 没有连接，先打开 Chrome，确认 OpenCLI Browser Bridge 扩展可用，然后重启 OpenCLI daemon：
 
 ```bash
 opencli daemon restart
 opencli doctor
 ```
 
-同时需要在 Chrome 中登录：
+然后在 Chrome 中登录：
 
 ```text
 https://treehole.pku.edu.cn/web/
@@ -74,6 +53,33 @@ https://treehole.pku.edu.cn/web/
 ```bash
 opencli profile list
 opencli profile use <profile>
+```
+
+把仓库克隆到 Codex skills 目录：
+
+```bash
+mkdir -p ~/.codex/skills
+git clone https://github.com/ADreamLeft/pku-treehole-skill.git ~/.codex/skills/pku-treehole
+```
+
+然后重启 Codex，或重新加载 skills。
+
+最后做一次 dry-run 验证。下面两个写入命令不会实际发布：
+
+```bash
+opencli treehole search "数学期末" --pages 1 --site-session persistent -f json
+opencli treehole write "__dry_run_probe__" -f json
+opencli treehole comment 1 "__dry_run_probe__" -f json
+```
+
+如果 npm/npx 不方便使用，也可以从仓库手动安装 adapter：
+
+```bash
+mkdir -p ~/.opencli/clis/treehole ~/.opencli/node_modules/@jackwener
+cp -R ~/.codex/skills/pku-treehole/opencli/clis/treehole/*.js ~/.opencli/clis/treehole/
+test -f ~/.opencli/package.json || cp ~/.codex/skills/pku-treehole/opencli/package.json ~/.opencli/package.json
+test -e ~/.opencli/node_modules/@jackwener/opencli || ln -s "$(npm root -g)/@jackwener/opencli" ~/.opencli/node_modules/@jackwener/opencli
+opencli treehole --help
 ```
 
 ## 持久会话
@@ -138,10 +144,14 @@ Use $pku-treehole to search "数学期末" on PKU Treehole, save raw JSON, and s
 
 ```text
 .
-├── SKILL.md
+├── .gitignore
 ├── README.md
+├── SKILL.md
 ├── agents/
 │   └── openai.yaml
+├── bin/
+│   ├── opencli-treehole-adapter.mjs
+│   └── opencli-treehole-adapter.test.mjs
 ├── opencli/
 │   ├── package.json
 │   └── clis/
@@ -157,6 +167,8 @@ Use $pku-treehole to search "数学期末" on PKU Treehole, save raw JSON, and s
 │           ├── utils.js
 │           ├── utils.test.js
 │           └── write.js
+├── package-lock.json
+├── package.json
 ├── references/
 │   ├── api-and-data.md
 │   └── task-templates.md
